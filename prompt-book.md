@@ -40,6 +40,13 @@ const res = await fetch(proxyUrl, {
 
 ✅ **확인**: 검색해서 테이블이 나오면 성공!
 
+> ⚠️ **실행 방법**: HTML 파일을 더블클릭하면 CORS 에러가 납니다. 반드시 로컬 서버로 실행하세요:
+> ```bash
+> # 파일이 있는 폴더에서
+> python3 -m http.server 8080
+> # 브라우저에서 http://localhost:8080 접속
+> ```
+
 ---
 
 ### 2단계: 가격 통계 + CSV 다운로드
