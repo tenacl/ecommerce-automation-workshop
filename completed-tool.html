@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>네이버 이커머스 도구 - 가격모니터링 · 리뷰감성 · SEO · 트렌드</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #242424;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --text-tertiary: #666666;
+            --accent: #03C75A;
+            --accent-hover: #02a34a;
+            --accent-light: rgba(3, 199, 90, 0.1);
+            --border: #333333;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --danger: #F44336;
+            --shadow: rgba(0, 0, 0, 0.5);
+            --positive: #10B981;
+            --negative: #EF4444;
+            --neutral: #F59E0B;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .logo svg { width: 28px; height: 28px; }
+
+        .api-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .api-toggle-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .api-toggle-btn:hover {
+            background: var(--accent);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .api-inputs {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .api-inputs.show { display: flex; }
+
+        .api-input {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 8px;
+            width: 200px;
+            font-size: 13px;
+        }
+
+        .api-input::placeholder { color: var(--text-tertiary); }
+
+        .api-save-btn {
+            padding: 8px 16px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .api-save-btn:hover { background: var(--accent-hover); }
+
+        .api-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--danger);
+            transition: background 0.3s;
+        }
+
+        .api-status.connected { background: var(--success); }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            padding: 6px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(3, 199, 90, 0.3);
+        }
+
+        .tab-btn svg { width: 18px; height: 18px; }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Search bar */
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .search-btn {
+            padding: 14px 32px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .search-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(3, 199, 90, 0.4);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Cards / Sections */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Table */
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead th {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+        }
+
+        tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tbody tr:hover { background: var(--bg-tertiary); }
+
+        .product-name {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .product-link {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .product-link:hover { text-decoration: underline; }
+
+        .price { font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+        /* CSV button */
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .btn-outline {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-outline:hover { background: var(--bg-tertiary); border-color: var(--accent); color: var(--accent); }
+
+        /* Sentiment */
+        .review-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .review-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            transition: transform 0.2s;
+        }
+
+        .review-card:hover { transform: translateX(4px); }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .review-title {
+            font-weight: 600;
+            font-size: 15px;
+            flex: 1;
+            margin-right: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sentiment-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .sentiment-positive { background: rgba(16, 185, 129, 0.15); color: var(--positive); }
+        .sentiment-negative { background: rgba(239, 68, 68, 0.15); color: var(--negative); }
+        .sentiment-neutral { background: rgba(245, 158, 11, 0.15); color: var(--neutral); }
+
+        .review-excerpt {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .review-meta {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Chart */
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 24px;
+            height: 200px;
+            padding: 20px 0;
+            justify-content: center;
+        }
+
+        .chart-bar-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+        .chart-bar {
+            width: 80px;
+            border-radius: 8px 8px 0 0;
+            transition: height 0.6s ease;
+            position: relative;
+            min-height: 4px;
+        }
+
+        .chart-bar-value {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .chart-bar-label { font-size: 13px; color: var(--text-secondary); }
+
+        /* SEO */
+        .seo-results { display: flex; flex-direction: column; gap: 16px; }
+
+        .seo-title-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .seo-title-text {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            word-break: break-all;
+        }
+
+        .char-counts {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .char-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .char-ok { border-color: var(--positive); color: var(--positive); }
+        .char-warn { border-color: var(--warning); color: var(--warning); }
+        .char-over { border-color: var(--negative); color: var(--negative); }
+
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .keyword-tag {
+            background: var(--accent-light);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3; }
+        .empty-state p { font-size: 16px; }
+
+        /* Skeleton loading */
+        .skeleton-wrap { padding: 24px 0; }
+        .skeleton-line {
+            height: 16px;
+            background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border) 50%, var(--bg-tertiary) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .skeleton-line.short { width: 60%; }
+        .skeleton-line.medium { width: 80%; }
+        .skeleton-stat {
+            height: 80px;
+            background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border) 50%, var(--bg-tertiary) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 12px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* API warning */
+        .api-warning {
+            border-color: var(--warning);
+            background: rgba(255, 193, 7, 0.05);
+        }
+        .api-warning p { color: var(--text-secondary); margin-bottom: 12px; line-height: 1.6; }
+        .api-warning ol { color: var(--text-secondary); padding-left: 20px; }
+        .api-warning ol li { margin-bottom: 8px; line-height: 1.6; }
+
+        /* Error card */
+        .error-card {
+            border-left: 4px solid var(--danger);
+        }
+        .error-card .error-title { font-weight: 600; margin-bottom: 8px; color: var(--danger); }
+        .error-card .error-detail { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+        .error-card .error-hint { margin-top: 12px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; font-size: 13px; color: var(--text-secondary); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; align-items: stretch; }
+            .api-section { flex-direction: column; }
+            .api-input { width: 100%; }
+            .tab-btn { padding: 10px 12px; font-size: 12px; }
+            .tab-btn span.tab-label { display: none; }
+            .search-bar { flex-direction: column; }
+            .search-btn { width: 100%; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .chart-bar { width: 50px; }
+            .char-counts { flex-direction: column; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+        /* Trend chart */
+        .trend-chart-wrap {
+            position: relative;
+            height: 350px;
+            margin-bottom: 20px;
+        }
+
+        /* Comparison table */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .compare-col {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .compare-col-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            word-break: break-all;
+        }
+
+        .compare-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(51,51,51,0.5);
+            font-size: 14px;
+        }
+
+        .compare-row:last-child { border-bottom: none; }
+
+        .compare-label { color: var(--text-secondary); }
+
+        .compare-value { font-weight: 600; text-align: right; }
+
+        .compare-value.win { color: var(--positive); }
+        .compare-value.lose { color: var(--text-secondary); }
+
+        /* AI analysis card */
+        .ai-card {
+            background: linear-gradient(135deg, rgba(3,199,90,0.08), rgba(3,199,90,0.02));
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 20px;
+        }
+
+        .ai-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .ai-metric {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .ai-metric-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .ai-metric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .ai-summary {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+        }
+
+        .recommend-stars { color: var(--accent); letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+                네이버 이커머스 도구
+            </div>
+            <div class="api-section">
+                <div class="api-status" id="apiStatus" title="API 미연결"></div>
+                <button class="api-toggle-btn" onclick="toggleApiInputs()" title="API 설정">⚙</button>
+                <div class="api-inputs" id="apiInputs">
+                    <input type="password" class="api-input" id="naverClientId" placeholder="네이버 Client ID">
+                    <input type="password" class="api-input" id="naverClientSecret" placeholder="네이버 Client Secret">
+                    <input type="password" class="api-input" id="openaiKey" placeholder="OpenAI API Key">
+                    <button class="api-save-btn" onclick="saveApiKeys()">저장</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('price')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                <span class="tab-label">경쟁사 가격 모니터링</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('review')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                <span class="tab-label">블로그 리뷰 감성분석</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('seo')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <span class="tab-label">상품명 SEO 최적화</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('trend')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <span class="tab-label">트렌드 분석</span>
+            </button>
+        </div>
+
+        <!-- Tab 1: 가격 모니터링 -->
+        <div class="tab-content active" id="tab-price">
+            <div class="search-bar">
+                <input type="text" class="search-input" id="priceKeyword" placeholder="검색할 상품 키워드를 입력하세요 (예: 무선이어폰)" onkeydown="if(event.key==='Enter')searchPrice()">
+                <button class="search-btn" id="priceBtn" onclick="searchPrice()">검색</button>
+            </div>
+            <div id="priceResult">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                    <p>키워드를 입력하고 검색하면 상위 20개 상품의 가격 정보를 분석합니다</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: 리뷰 감성분석 -->
+        <div class="tab-content" id="tab-review">
+            <div class="search-bar">
+                <input type="text" class="search-input" id="reviewKeyword" placeholder="분석할 상품/브랜드 키워드 입력 (예: 다이슨 에어랩)" onkeydown="if(event.key==='Enter')searchReview()">
+                <button class="search-btn" id="reviewBtn" onclick="searchReview()">분석</button>
+            </div>
+            <div id="reviewResult">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    <p>키워드를 입력하면 블로그 리뷰를 수집하고 AI 감성분석을 수행합니다</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: SEO 최적화 -->
+        <div class="tab-content" id="tab-seo">
+            <div class="search-bar">
+                <input type="text" class="search-input" id="seoKeyword" placeholder="상품명 SEO 분석할 키워드 입력 (예: 여성 겨울 패딩)" onkeydown="if(event.key==='Enter')searchSeo()">
+                <button class="search-btn" id="seoBtn" onclick="searchSeo()">생성</button>
+            </div>
+            <div id="seoResult">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <p>키워드를 입력하면 상위 상품을 분석하고 SEO 최적화된 상품명을 생성합니다</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: 트렌드 분석 -->
+        <div class="tab-content" id="tab-trend">
+            <div class="search-bar">
+                <input type="text" class="search-input" id="trendKeyword" placeholder="비교할 키워드를 쉼표로 구분 입력 (최대 5개, 예: 무선이어폰,블루투스스피커,스마트워치)" onkeydown="if(event.key==='Enter')searchTrend()">
+                <button class="search-btn" id="trendBtn" onclick="searchTrend()">분석</button>
+            </div>
+            <div id="trendResult">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <p>키워드를 입력하면 검색 트렌드 분석, 키워드 비교, AI 예측을 수행합니다</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PROXY = 'https://api.allorigins.win/raw?url=';
+
+        // API Keys
+        function loadKeys() {
+            return {
+                clientId: localStorage.getItem('naver_client_id') || '',
+                clientSecret: localStorage.getItem('naver_client_secret') || '',
+                openaiKey: localStorage.getItem('openai_api_key') || ''
+            };
+        }
+
+        function initKeys() {
+            const k = loadKeys();
+            document.getElementById('naverClientId').value = k.clientId;
+            document.getElementById('naverClientSecret').value = k.clientSecret;
+            document.getElementById('openaiKey').value = k.openaiKey;
+            updateApiStatus();
+        }
+
+        function saveApiKeys() {
+            localStorage.setItem('naver_client_id', document.getElementById('naverClientId').value.trim());
+            localStorage.setItem('naver_client_secret', document.getElementById('naverClientSecret').value.trim());
+            localStorage.setItem('openai_api_key', document.getElementById('openaiKey').value.trim());
+            updateApiStatus();
+            toggleApiInputs();
+        }
+
+        function updateApiStatus() {
+            const k = loadKeys();
+            const el = document.getElementById('apiStatus');
+            const ok = k.clientId && k.clientSecret;
+            el.classList.toggle('connected', ok);
+            el.title = ok ? 'API 연결됨' : 'API 미연결';
+        }
+
+        function toggleApiInputs() {
+            document.getElementById('apiInputs').classList.toggle('show');
+        }
+
+        function checkKeys(needOpenAI = false, resultEl = null) {
+            const k = loadKeys();
+            if (!k.clientId || !k.clientSecret) {
+                const msg = `<div class="card api-warning">
+                    <div class="card-title">🔑 네이버 API 키 설정 필요</div>
+                    <p>이 기능을 사용하려면 네이버 API 키를 먼저 입력해야 합니다.</p>
+                    <ol>
+                        <li><a href="https://developers.naver.com/apps/" target="_blank" style="color:var(--accent)">네이버 개발자센터</a>에서 애플리케이션을 등록하세요</li>
+                        <li>검색 API (쇼핑, 블로그) 및 데이터랩 API를 사용 설정하세요</li>
+                        <li>상단의 ⚙ 버튼을 클릭하여 발급받은 Client ID와 Secret을 입력하세요</li>
+                    </ol>
+                </div>`;
+                if (resultEl) resultEl.innerHTML = msg;
+                toggleApiInputs();
+                return null;
+            }
+            if (needOpenAI && !k.openaiKey) {
+                const msg = `<div class="card api-warning">
+                    <div class="card-title">🔑 OpenAI API 키 추가 설정 필요</div>
+                    <p>AI 분석 기능을 사용하려면 OpenAI API 키도 필요합니다.</p>
+                    <ol>
+                        <li><a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--accent)">OpenAI 플랫폼</a>에서 API 키를 발급하세요</li>
+                        <li>상단의 ⚙ 버튼을 클릭하여 키를 입력하세요</li>
+                    </ol>
+                </div>`;
+                if (resultEl) resultEl.innerHTML = msg;
+                toggleApiInputs();
+                return null;
+            }
+            return k;
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach((b, i) => {
+                b.classList.toggle('active', ['price', 'review', 'seo', 'trend'][i] === tab);
+            });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            // Chart.js needs resize after display:none → block transition
+            if (tab === 'trend' && trendChart) {
+                setTimeout(() => trendChart.resize(), 50);
+            }
+        }
+
+        // Naver API call via CORS proxy
+        async function naverApi(endpoint, params) {
+            const k = loadKeys();
+            const qs = new URLSearchParams(params).toString();
+            const url = `https://openapi.naver.com/v1/${endpoint}?${qs}`;
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            let res;
+            try {
+                res = await fetch(proxyUrl, {
+                    headers: {
+                        'X-Naver-Client-Id': k.clientId,
+                        'X-Naver-Client-Secret': k.clientSecret
+                    }
+                });
+            } catch (e) {
+                throw new Error('네트워크 연결 실패: CORS 프록시 서버(corsproxy.io)에 접근할 수 없습니다. 인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.');
+            }
+            if (!res.ok) {
+                if (res.status === 401) throw new Error('네이버 API 인증 실패: Client ID 또는 Secret이 올바른지 확인해주세요.');
+                if (res.status === 429) throw new Error('API 호출 한도 초과: 잠시 후 다시 시도해주세요.');
+                if (res.status === 403) throw new Error('API 접근 권한 없음: 네이버 개발자센터에서 해당 API 사용 신청을 확인해주세요.');
+                throw new Error(`네이버 API 오류 (HTTP ${res.status})`);
+            }
+            return res.json();
+        }
+
+        // OpenAI call
+        async function openaiChat(messages) {
+            const k = loadKeys();
+            let res;
+            try {
+                res = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${k.openaiKey}`
+                    },
+                    body: JSON.stringify({ model: 'gpt-4o-mini', messages, temperature: 0.7 })
+                });
+            } catch (e) {
+                throw new Error('네트워크 연결 실패: OpenAI API에 접근할 수 없습니다. 인터넷 연결을 확인해주세요.');
+            }
+            if (!res.ok) {
+                if (res.status === 401) throw new Error('OpenAI API 인증 실패: API 키가 올바른지 확인해주세요.');
+                if (res.status === 429) throw new Error('OpenAI API 호출 한도 초과: 잠시 후 다시 시도하거나 사용량을 확인해주세요.');
+                if (res.status === 402) throw new Error('OpenAI API 결제 필요: API 크레딧이 부족합니다. OpenAI 대시보드에서 결제 정보를 확인해주세요.');
+                throw new Error(`OpenAI API 오류 (HTTP ${res.status})`);
+            }
+            const data = await res.json();
+            return data.choices[0].message.content;
+        }
+
+        function showLoading(el, msg = '데이터를 불러오는 중...') {
+            el.innerHTML = `
+                <div class="loading"><div class="spinner"></div>${msg}</div>
+                <div class="skeleton-wrap">
+                    <div class="stats-grid">
+                        <div class="skeleton-stat"></div>
+                        <div class="skeleton-stat"></div>
+                        <div class="skeleton-stat"></div>
+                        <div class="skeleton-stat"></div>
+                    </div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line medium"></div>
+                </div>`;
+        }
+
+        function showError(el, error) {
+            let title = '오류가 발생했습니다';
+            let detail = error.message;
+            let hint = '';
+
+            if (error.message.includes('CORS') || error.message.includes('네트워크')) {
+                title = '네트워크 연결 오류';
+                hint = '💡 CORS 프록시 서버가 일시적으로 응답하지 않을 수 있습니다. 잠시 후 다시 시도하거나, 인터넷 연결 상태를 확인해주세요.';
+            } else if (error.message.includes('인증 실패') || error.message.includes('401')) {
+                title = 'API 인증 오류';
+                hint = '💡 상단 ⚙ 버튼을 눌러 API 키가 올바르게 입력되었는지 확인해주세요.';
+            } else if (error.message.includes('429') || error.message.includes('한도')) {
+                title = 'API 호출 한도 초과';
+                hint = '💡 API 호출 횟수를 초과했습니다. 1~2분 후 다시 시도해주세요.';
+            } else if (error.message.includes('파싱 실패')) {
+                title = 'AI 응답 처리 오류';
+                hint = '💡 AI 응답 형식이 예상과 다릅니다. 다시 시도하면 해결될 수 있습니다.';
+            }
+
+            el.innerHTML = `
+                <div class="card error-card">
+                    <div class="error-title">${title}</div>
+                    <div class="error-detail">${detail}</div>
+                    ${hint ? `<div class="error-hint">${hint}</div>` : ''}
+                </div>`;
+        }
+
+        function formatPrice(n) {
+            return Number(n).toLocaleString('ko-KR') + '원';
+        }
+
+        function stripHtml(str) {
+            return str.replace(/<[^>]*>/g, '');
+        }
+
+        // ===================== TAB 1: 가격 모니터링 =====================
+        async function searchPrice() {
+            const resultEl = document.getElementById('priceResult');
+            const keys = checkKeys(false, resultEl);
+            if (!keys) return;
+            const keyword = document.getElementById('priceKeyword').value.trim();
+            if (!keyword) return alert('키워드를 입력하세요.');
+
+            const btn = document.getElementById('priceBtn');
+            btn.disabled = true;
+            showLoading(resultEl, '네이버 쇼핑 검색 중...');
+
+            try {
+                const data = await naverApi('search/shop.json', { query: keyword, display: 20, sort: 'sim' });
+                const items = data.items || [];
+                if (!items.length) { resultEl.innerHTML = '<div class="empty-state"><p>검색 결과가 없습니다.</p></div>'; return; }
+
+                const prices = items.map(i => Number(i.lprice)).filter(p => p > 0);
+                const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+                const minPrice = Math.min(...prices);
+                const maxPrice = Math.max(...prices);
+                const medianPrice = prices.sort((a, b) => a - b)[Math.floor(prices.length / 2)];
+
+                let html = `
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-value">${formatPrice(avgPrice)}</div><div class="stat-label">평균 최저가</div></div>
+                        <div class="stat-card"><div class="stat-value">${formatPrice(minPrice)}</div><div class="stat-label">최저가</div></div>
+                        <div class="stat-card"><div class="stat-value">${formatPrice(maxPrice)}</div><div class="stat-label">최고가</div></div>
+                        <div class="stat-card"><div class="stat-value">${formatPrice(medianPrice)}</div><div class="stat-label">중간가</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">📊 상위 ${items.length}개 상품</div>
+                        <div class="action-bar">
+                            <button class="btn-outline" onclick="downloadCsv()">⬇ CSV 다운로드</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table id="priceTable">
+                                <thead><tr>
+                                    <th>#</th><th>상품명</th><th>최저가</th><th>판매처</th><th>브랜드</th><th>링크</th>
+                                </tr></thead>
+                                <tbody>
+                `;
+
+                items.forEach((item, idx) => {
+                    html += `<tr>
+                        <td>${idx + 1}</td>
+                        <td class="product-name" title="${stripHtml(item.title)}">${stripHtml(item.title)}</td>
+                        <td class="price">${formatPrice(item.lprice)}</td>
+                        <td>${item.mallName || '-'}</td>
+                        <td>${item.brand || '-'}</td>
+                        <td><a href="${item.link}" target="_blank" class="product-link">보기</a></td>
+                    </tr>`;
+                });
+
+                html += '</tbody></table></div></div>';
+                resultEl.innerHTML = html;
+
+                // Store for CSV
+                window._priceItems = items;
+            } catch (e) {
+                showError(resultEl, e);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function downloadCsv() {
+            if (!window._priceItems) return;
+            const bom = '\uFEFF';
+            let csv = bom + '순위,상품명,최저가,판매처,브랜드,링크\n';
+            window._priceItems.forEach((item, i) => {
+                csv += `${i + 1},"${stripHtml(item.title).replace(/"/g, '""')}",${item.lprice},"${item.mallName || ''}","${item.brand || ''}","${item.link}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `가격모니터링_${document.getElementById('priceKeyword').value}_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+        }
+
+        // ===================== TAB 2: 블로그 리뷰 감성분석 =====================
+        async function searchReview() {
+            const resultEl = document.getElementById('reviewResult');
+            const keys = checkKeys(true, resultEl);
+            if (!keys) return;
+            const keyword = document.getElementById('reviewKeyword').value.trim();
+            if (!keyword) return alert('키워드를 입력하세요.');
+
+            const btn = document.getElementById('reviewBtn');
+            btn.disabled = true;
+            showLoading(resultEl, '블로그 리뷰 수집 중...');
+
+            try {
+                const data = await naverApi('search/blog.json', { query: keyword + ' 리뷰', display: 10, sort: 'sim' });
+                const blogs = data.items || [];
+                if (!blogs.length) { resultEl.innerHTML = '<div class="empty-state"><p>블로그 검색 결과가 없습니다.</p></div>'; return; }
+
+                showLoading(resultEl, 'AI 감성분석 중...');
+
+                const blogTexts = blogs.map((b, i) =>
+                    `[${i + 1}] 제목: ${stripHtml(b.title)}\n내용: ${stripHtml(b.description)}`
+                ).join('\n\n');
+
+                const prompt = `다음은 "${keyword}"에 대한 네이버 블로그 리뷰 10개입니다. 각 리뷰의 감성을 분석해주세요.
+
+${blogTexts}
+
+다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+[
+  {"index": 1, "sentiment": "긍정|부정|중립", "score": 0.0~1.0, "reason": "한줄 요약"},
+  ...
+]`;
+
+                const aiResult = await openaiChat([{ role: 'user', content: prompt }]);
+                let sentiments;
+                try {
+                    const cleaned = aiResult.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+                    sentiments = JSON.parse(cleaned);
+                } catch {
+                    throw new Error('AI 응답 파싱 실패');
+                }
+
+                // Count sentiments
+                const counts = { '긍정': 0, '부정': 0, '중립': 0 };
+                sentiments.forEach(s => { counts[s.sentiment] = (counts[s.sentiment] || 0) + 1; });
+                const total = sentiments.length;
+                const avgScore = (sentiments.reduce((a, s) => a + s.score, 0) / total).toFixed(2);
+
+                // Chart
+                const maxCount = Math.max(...Object.values(counts), 1);
+                let html = `
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">분석 리뷰 수</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--positive)">${counts['긍정']}</div><div class="stat-label">긍정</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--negative)">${counts['부정']}</div><div class="stat-label">부정</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--neutral)">${counts['중립']}</div><div class="stat-label">중립</div></div>
+                        <div class="stat-card"><div class="stat-value">${avgScore}</div><div class="stat-label">평균 감성 점수</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">📊 감성 분포</div>
+                        <div class="chart-container">
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height:${(counts['긍정'] / maxCount) * 160}px; background:var(--positive);">
+                                    <div class="chart-bar-value" style="color:var(--positive)">${counts['긍정']}</div>
+                                </div>
+                                <div class="chart-bar-label">긍정</div>
+                            </div>
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height:${(counts['중립'] / maxCount) * 160}px; background:var(--neutral);">
+                                    <div class="chart-bar-value" style="color:var(--neutral)">${counts['중립']}</div>
+                                </div>
+                                <div class="chart-bar-label">중립</div>
+                            </div>
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height:${(counts['부정'] / maxCount) * 160}px; background:var(--negative);">
+                                    <div class="chart-bar-value" style="color:var(--negative)">${counts['부정']}</div>
+                                </div>
+                                <div class="chart-bar-label">부정</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">💬 리뷰 상세</div>
+                        <div class="review-list">
+                `;
+
+                blogs.forEach((blog, i) => {
+                    const s = sentiments.find(x => x.index === i + 1) || { sentiment: '중립', score: 0.5, reason: '' };
+                    const sentClass = s.sentiment === '긍정' ? 'positive' : s.sentiment === '부정' ? 'negative' : 'neutral';
+                    html += `
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="review-title">${stripHtml(blog.title)}</div>
+                                <span class="sentiment-badge sentiment-${sentClass}">${s.sentiment} ${(s.score * 100).toFixed(0)}%</span>
+                            </div>
+                            <div class="review-excerpt">${stripHtml(blog.description)}</div>
+                            <div class="review-meta">
+                                <span>${blog.bloggername}</span>
+                                <span>${s.reason}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div></div>';
+                resultEl.innerHTML = html;
+            } catch (e) {
+                showError(resultEl, e);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ===================== TAB 3: 상품명 SEO =====================
+        async function searchSeo() {
+            const resultEl = document.getElementById('seoResult');
+            const keys = checkKeys(true, resultEl);
+            if (!keys) return;
+            const keyword = document.getElementById('seoKeyword').value.trim();
+            if (!keyword) return alert('키워드를 입력하세요.');
+
+            const btn = document.getElementById('seoBtn');
+            btn.disabled = true;
+            showLoading(resultEl, '상위 상품 분석 중...');
+
+            try {
+                const data = await naverApi('search/shop.json', { query: keyword, display: 10, sort: 'sim' });
+                const items = data.items || [];
+                if (!items.length) { resultEl.innerHTML = '<div class="empty-state"><p>검색 결과가 없습니다.</p></div>'; return; }
+
+                const titles = items.map((item, i) => `${i + 1}. ${stripHtml(item.title)}`).join('\n');
+
+                showLoading(resultEl, 'AI 키워드 추출 및 상품명 생성 중...');
+
+                const prompt = `다음은 "${keyword}" 검색 시 네이버 쇼핑 상위 10개 상품명입니다:
+
+${titles}
+
+다음을 수행하세요:
+1. 상위 상품명에서 공통적으로 사용되는 핵심 키워드 10개를 추출
+2. SEO에 최적화된 새로운 상품명 3개를 생성 (검색 노출에 유리하도록)
+
+다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{
+  "keywords": ["키워드1", "키워드2", ...],
+  "titles": [
+    "SEO 최적화 상품명 1",
+    "SEO 최적화 상품명 2",
+    "SEO 최적화 상품명 3"
+  ]
+}`;
+
+                const aiResult = await openaiChat([{ role: 'user', content: prompt }]);
+                let parsed;
+                try {
+                    const cleaned = aiResult.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+                    parsed = JSON.parse(cleaned);
+                } catch {
+                    throw new Error('AI 응답 파싱 실패');
+                }
+
+                const platforms = [
+                    { name: '네이버 스마트스토어', max: 100 },
+                    { name: '쿠팡', max: 100 },
+                    { name: '11번가', max: 100 },
+                    { name: 'G마켓/옥션', max: 100 },
+                    { name: '위메프', max: 80 },
+                ];
+
+                let html = `
+                    <div class="card">
+                        <div class="card-title">🔑 추출된 핵심 키워드</div>
+                        <div class="keyword-tags">
+                            ${parsed.keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">✨ AI 생성 SEO 상품명</div>
+                        <div class="seo-results">
+                `;
+
+                parsed.titles.forEach((title, i) => {
+                    const len = title.length;
+                    html += `
+                        <div class="seo-title-card">
+                            <div class="seo-title-text">${i + 1}. ${title}</div>
+                            <div class="char-counts">
+                                ${platforms.map(p => {
+                                    const cls = len <= p.max ? 'char-ok' : len <= p.max + 10 ? 'char-warn' : 'char-over';
+                                    return `<span class="char-badge ${cls}">${p.name}: ${len}/${p.max}자</span>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>
+                    <div class="card">
+                        <div class="card-title">📋 참고: 상위 상품명</div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>#</th><th>상품명</th><th>글자수</th></tr></thead>
+                                <tbody>
+                                    ${items.map((item, i) => {
+                                        const t = stripHtml(item.title);
+                                        return `<tr><td>${i + 1}</td><td>${t}</td><td>${t.length}자</td></tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                resultEl.innerHTML = html;
+            } catch (e) {
+                showError(resultEl, e);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ===================== TAB 4: 트렌드 분석 =====================
+        const TREND_COLORS = ['#03C75A', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+        let trendChart = null;
+
+        async function naverDatalab(keywords) {
+            const k = loadKeys();
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            const fmt = d => d.toISOString().slice(0, 10);
+
+            const body = {
+                startDate: fmt(startDate),
+                endDate: fmt(endDate),
+                timeUnit: 'month',
+                keywordGroups: keywords.map(kw => ({
+                    groupName: kw,
+                    keywords: [kw]
+                }))
+            };
+
+            const url = 'https://openapi.naver.com/v1/datalab/search';
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            let res;
+            try {
+                res = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Naver-Client-Id': k.clientId,
+                        'X-Naver-Client-Secret': k.clientSecret
+                    },
+                    body: JSON.stringify(body)
+                });
+            } catch (e) {
+                throw new Error('네트워크 연결 실패: CORS 프록시 서버(corsproxy.io)에 접근할 수 없습니다. 인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.');
+            }
+            if (!res.ok) {
+                if (res.status === 401) throw new Error('네이버 API 인증 실패: Client ID 또는 Secret이 올바른지 확인해주세요.');
+                if (res.status === 429) throw new Error('API 호출 한도 초과: 잠시 후 다시 시도해주세요.');
+                throw new Error(`데이터랩 API 오류 (HTTP ${res.status})`);
+            }
+            return res.json();
+        }
+
+        function renderTrendChart(datalabData, predictions) {
+            const container = document.getElementById('trendChartCanvas');
+            if (trendChart) trendChart.destroy();
+
+            const labels = datalabData.results[0].data.map(d => d.period.slice(0, 7));
+            const datasets = datalabData.results.map((result, i) => ({
+                label: result.title,
+                data: result.data.map(d => d.ratio),
+                borderColor: TREND_COLORS[i],
+                backgroundColor: TREND_COLORS[i] + '20',
+                tension: 0.3,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: false
+            }));
+
+            // Add prediction datasets if available
+            if (predictions) {
+                predictions.forEach((pred, i) => {
+                    if (!pred.months) return;
+                    const lastRealValue = datalabData.results[i].data.slice(-1)[0].ratio;
+                    const predData = new Array(labels.length - 1).fill(null);
+                    predData.push(lastRealValue);
+                    pred.months.forEach(m => predData.push(m.value));
+                    datasets.push({
+                        label: `${datalabData.results[i].title} (예측)`,
+                        data: predData,
+                        borderColor: TREND_COLORS[i],
+                        borderDash: [8, 4],
+                        tension: 0.3,
+                        pointRadius: 5,
+                        pointStyle: 'triangle',
+                        fill: false
+                    });
+                    pred.months.forEach(m => {
+                        if (!labels.includes(m.month)) labels.push(m.month);
+                    });
+                });
+            }
+
+            trendChart = new Chart(container, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#aaa', font: { size: 13 } } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#666' }, grid: { color: '#333' } },
+                        y: { ticks: { color: '#666' }, grid: { color: '#333' }, beginAtZero: true }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
+        }
+
+        function buildCompareTable(keywords, datalabData, shoppingData) {
+            // Find best values for highlighting
+            const metrics = keywords.map((kw, i) => {
+                const trend = datalabData.results[i].data;
+                const recent = trend.slice(-3).reduce((a, b) => a + b.ratio, 0) / 3;
+                const yearAgo = trend.slice(0, 3).reduce((a, b) => a + b.ratio, 0) / 3;
+                const changePercent = yearAgo > 0 ? ((recent - yearAgo) / yearAgo * 100).toFixed(1) : 0;
+                const shop = shoppingData[i];
+                const totalProducts = shop.total || 0;
+                const prices = (shop.items || []).map(x => Number(x.lprice)).filter(p => p > 0);
+                const avgPrice = prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
+                const competition = recent > 0 ? (totalProducts / recent).toFixed(1) : 0;
+                return { keyword: kw, recent, changePercent: Number(changePercent), totalProducts, avgPrice, competition: Number(competition) };
+            });
+
+            // Determine best for each metric
+            const bestChange = Math.max(...metrics.map(m => m.changePercent));
+            const bestProducts = Math.max(...metrics.map(m => m.totalProducts));
+            const bestPrice = Math.min(...metrics.filter(m => m.avgPrice > 0).map(m => m.avgPrice));
+            const bestCompetition = Math.min(...metrics.filter(m => m.competition > 0).map(m => m.competition));
+
+            return `<div class="compare-grid">${metrics.map(m => `
+                <div class="compare-col">
+                    <div class="compare-col-title">${m.keyword}</div>
+                    <div class="compare-row">
+                        <span class="compare-label">트렌드 변화</span>
+                        <span class="compare-value ${m.changePercent === bestChange ? 'win' : ''}">${m.changePercent > 0 ? '+' : ''}${m.changePercent}%</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-label">쇼핑 상품 수</span>
+                        <span class="compare-value ${m.totalProducts === bestProducts ? 'win' : ''}">${m.totalProducts.toLocaleString()}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-label">평균 가격</span>
+                        <span class="compare-value ${m.avgPrice === bestPrice ? 'win' : ''}">${m.avgPrice ? formatPrice(m.avgPrice) : '-'}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-label">경쟁 강도</span>
+                        <span class="compare-value ${m.competition === bestCompetition ? 'win' : ''}">${m.competition > 0 ? m.competition : '-'} ${m.competition === bestCompetition ? '🟢 블루오션' : m.competition > 100 ? '🔴 레드오션' : '🟡 보통'}</span>
+                    </div>
+                </div>
+            `).join('')}</div>`;
+        }
+
+        async function searchTrend() {
+            const resultEl = document.getElementById('trendResult');
+            const keys = checkKeys(true, resultEl);
+            if (!keys) return;
+            const raw = document.getElementById('trendKeyword').value.trim();
+            if (!raw) return alert('키워드를 입력하세요.');
+
+            const keywords = raw.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5);
+            if (!keywords.length) return alert('키워드를 입력하세요.');
+
+            const btn = document.getElementById('trendBtn');
+            btn.disabled = true;
+
+            try {
+                // Step 1: Datalab trend
+                showLoading(resultEl, '네이버 데이터랩 검색 트렌드 조회 중...');
+                const datalabData = await naverDatalab(keywords);
+
+                // Step 2: Shopping data for each keyword
+                showLoading(resultEl, '쇼핑 검색 결과 조회 중...');
+                const shoppingData = await Promise.all(
+                    keywords.map(kw => naverApi('search/shop.json', { query: kw, display: 20, sort: 'sim' }))
+                );
+
+                // Render chart + comparison first
+                let html = `
+                    <div class="card">
+                        <div class="card-title">📈 검색 트렌드 (최근 1년)</div>
+                        <div class="trend-chart-wrap">
+                            <canvas id="trendChartCanvas"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">⚔️ 키워드 비교 분석</div>
+                        ${buildCompareTable(keywords, datalabData, shoppingData)}
+                    </div>
+                    <div id="trendAiSection">
+                        <div class="loading"><div class="spinner"></div>AI 트렌드 예측 중...</div>
+                    </div>
+                `;
+                resultEl.innerHTML = html;
+                renderTrendChart(datalabData, null);
+
+                // Step 3: AI prediction
+                const trendSummary = datalabData.results.map(r =>
+                    `[${r.title}]\n` + r.data.map(d => `${d.period}: ${d.ratio}`).join('\n')
+                ).join('\n\n');
+
+                const aiPrompt = `아래는 네이버 검색 트렌드의 월별 데이터입니다 (0~100 상대값).
+
+${trendSummary}
+
+각 키워드에 대해 향후 3개월 예측, 시즌성 판단, 진입 추천 여부를 분석해주세요.
+
+다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{
+  "predictions": [
+    {
+      "keyword": "키워드명",
+      "months": [
+        {"month": "2026-04", "value": 예측값},
+        {"month": "2026-05", "value": 예측값},
+        {"month": "2026-06", "value": 예측값}
+      ],
+      "seasonal": true/false,
+      "trend_direction": "성장|하락|횡보",
+      "recommend_score": 1~5,
+      "summary": "한 줄 요약"
+    }
+  ]
+}`;
+
+                const aiResult = await openaiChat([{ role: 'user', content: aiPrompt }]);
+                let parsed;
+                try {
+                    const cleaned = aiResult.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+                    parsed = JSON.parse(cleaned);
+                } catch {
+                    throw new Error('AI 예측 응답 파싱 실패');
+                }
+
+                // Update chart with predictions
+                renderTrendChart(datalabData, parsed.predictions);
+
+                // Render AI analysis cards
+                const aiSection = document.getElementById('trendAiSection');
+                let aiHtml = `<div class="ai-card"><div class="ai-card-title">🤖 AI 트렌드 예측</div>`;
+
+                parsed.predictions.forEach((pred, i) => {
+                    const dirColor = pred.trend_direction === '성장' ? 'var(--positive)' : pred.trend_direction === '하락' ? 'var(--negative)' : 'var(--neutral)';
+                    const stars = '★'.repeat(pred.recommend_score) + '☆'.repeat(5 - pred.recommend_score);
+                    aiHtml += `
+                        <div style="margin-bottom:20px;${i > 0 ? 'padding-top:20px;border-top:1px solid var(--border);' : ''}">
+                            <h3 style="margin-bottom:12px;color:${TREND_COLORS[i]}">${pred.keyword}</h3>
+                            <div class="ai-metrics">
+                                <div class="ai-metric">
+                                    <div class="ai-metric-value" style="color:${dirColor}">${pred.trend_direction}</div>
+                                    <div class="ai-metric-label">트렌드 방향</div>
+                                </div>
+                                <div class="ai-metric">
+                                    <div class="ai-metric-value">${pred.seasonal ? '⭕ 있음' : '❌ 없음'}</div>
+                                    <div class="ai-metric-label">시즌성</div>
+                                </div>
+                                <div class="ai-metric">
+                                    <div class="ai-metric-value recommend-stars">${stars}</div>
+                                    <div class="ai-metric-label">진입 추천도</div>
+                                </div>
+                            </div>
+                            <div class="ai-summary">${pred.summary}</div>
+                        </div>
+                    `;
+                });
+
+                aiHtml += '</div>';
+                aiSection.innerHTML = aiHtml;
+
+            } catch (e) {
+                showError(resultEl, e);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Init
+        initKeys();
+    </script>
+</body>
+</html>
