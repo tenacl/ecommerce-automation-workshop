@@ -24,6 +24,18 @@
 
 CORS 문제 해결:
 - corsproxy.io 프록시 사용
+- fetch URL 형식: https://corsproxy.io/?encodeURIComponent(원본URL)
+- 헤더에 X-Naver-Client-Id, X-Naver-Client-Secret 포함
+
+예시 fetch 코드:
+const url = `https://openapi.naver.com/v1/search/shop.json?query=${keyword}&display=20`;
+const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+const res = await fetch(proxyUrl, {
+  headers: {
+    'X-Naver-Client-Id': clientId,
+    'X-Naver-Client-Secret': clientSecret
+  }
+});
 ```
 
 ✅ **확인**: 검색해서 테이블이 나오면 성공!
