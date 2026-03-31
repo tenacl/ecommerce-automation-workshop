@@ -732,6 +732,12 @@
         <div class="tab-content active" id="tab-price">
             <div class="search-bar">
                 <input type="text" class="search-input" id="priceKeyword" placeholder="검색할 상품 키워드를 입력하세요 (예: 무선이어폰)" onkeydown="if(event.key==='Enter')searchPrice()">
+                <select id="priceSort" style="padding:10px 12px;border-radius:8px;border:1px solid #333;background:#1a1a2e;color:#e0e0e0;font-size:14px;cursor:pointer;">
+                    <option value="sim">정확도순</option>
+                    <option value="date">날짜순</option>
+                    <option value="asc">가격 낮은순</option>
+                    <option value="dsc">가격 높은순</option>
+                </select>
                 <button class="search-btn" id="priceBtn" onclick="searchPrice()">검색</button>
             </div>
             <div id="priceResult">
@@ -988,7 +994,8 @@
             showLoading(resultEl, '네이버 쇼핑 검색 중...');
 
             try {
-                const data = await naverApi('search/shop.json', { query: keyword, display: 20, sort: 'sim' });
+                const sortVal = document.getElementById('priceSort').value;
+                const data = await naverApi('search/shop.json', { query: keyword, display: 20, sort: sortVal });
                 const items = data.items || [];
                 if (!items.length) { resultEl.innerHTML = '<div class="empty-state"><p>검색 결과가 없습니다.</p></div>'; return; }
 
