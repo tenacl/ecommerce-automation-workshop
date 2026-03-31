@@ -10,12 +10,13 @@
 
 | 항목 | 메타 (인스타/페북) | 유튜브 | 네이버 |
 |------|-------------------|--------|--------|
-| **핵심 자동화** | 광고 성과 분석 | 채널/트렌드 분석 | 쇼핑 트렌드 분석 |
-| **데이터 소스** | Meta Ad Library | YouTube Data API | 네이버 쇼핑/데이터랩 API |
-| **AI 활용** | 광고 카피 생성 | 트렌드 예측 | 감성분석 + SEO 최적화 |
-| **도구** | MCP + Playwright | youtube-analyzer | 네이버 트렌드 분석기 |
-| **난이도** | ★★★ (API 인증 복잡) | ★★ (API 키만 필요) | ★★ (API 키만 필요) |
-| **비용** | 무료 (라이브러리) | 무료 (일 10,000건) | 무료 (일 25,000건) |
+| **핵심 자동화** | 광고 라이브러리 분석 + 광고 카피 생성 | 채널/영상 분석 + 트렌드 추적 | 가격 모니터링 + 트렌드 분석 |
+| **데이터 소스** | Meta Ad Library API + Playwright | YouTube Data API v3 | 네이버 쇼핑/데이터랩/블로그 API |
+| **AI 활용** | 광고 카피 생성, 랜딩페이지 분석 | 채널 기여도/성과도 분석 | 감성분석 + SEO 최적화 + 트렌드 예측 |
+| **완성 도구** | meta-ad-library-mcp (MCP 서버) | youtube-analyzer (뷰트랩 스타일) | 네이버 트렌드 분석기 (4탭) |
+| **바이브코딩 단계** | 6단계 (MCP 구조) | 7단계 (검색→분석→필터→채널→AI) | 6단계 (검색→통계→리뷰→SEO→트렌드→UI) |
+| **난이도** | ★★★ (API 인증+MCP 구조) | ★★ (API 키만 필요) | ★★ (API 키만 필요) |
+| **비용** | 무료 | 무료 (일 10,000건) | 무료 (일 25,000건) |
 
 ---
 
@@ -74,6 +75,7 @@
 | 자료 | 링크 |
 |------|------|
 | 네이버 이커머스 도구 | [GitHub](https://github.com/tenacl/naver-ecommerce-tool) |
+| 유튜브 자동화 워크숍 | [GitHub](https://github.com/tenacl/youtube-automation-workshop) |
 | 네이버 API 발급 가이드 | [Scribehow](https://scribehow.com/viewer/Naver_Developers_API___qDWQUeY0TZ29kgT6dMoHeA) |
 | OpenAI API | [platform.openai.com](https://platform.openai.com) |
 | 타입봇 | [typebot.io](https://typebot.io) |
